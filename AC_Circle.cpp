@@ -1,5 +1,4 @@
 #include <AP_HAL/AP_HAL.h>
-#include <AP_Common/AP_Common.h>
 #include <AP_Math/AP_Math.h>
 #include <AP_Terrain/AP_Terrain.h>
 #include "AC_Circle.h"
@@ -34,34 +33,6 @@ const AP_Param::GroupInfo AC_Circle::var_info[] = {
 
     AP_GROUPEND
 };
-
-//const AP_Param::GroupInfo AP_Terrain::var_info[] = {
-    // @Param: ENABLE
-    // @DisplayName: Terrain data enable
-    // @Description: enable terrain data. This enables the vehicle storing a database of terrain data on the SD card. The terrain data is requested from the ground station as needed, and stored for later use on the SD card. To be useful the ground station must support TERRAIN_REQUEST messages and have access to a terrain database, such as the SRTM database.
-    // @Values: 0:Disable,1:Enable
-    // @User: Advanced
-  //  AP_GROUPINFO_FLAGS("ENABLE", 0, AP_Terrain, enable, 1, AP_PARAM_FLAG_ENABLE),
-
-    // @Param: SPACING
-    // @DisplayName: Terrain grid spacing
-    // @Description: Distance between terrain grid points in meters. This controls the horizontal resolution of the terrain data that is stored on te SD card and requested from the ground station. If your GCS is using the ArduPilot SRTM database like Mission Planner or MAVProxy, then a resolution of 100 meters is appropriate. Grid spacings lower than 100 meters waste SD card space if the GCS cannot provide that resolution. The grid spacing also controls how much data is kept in memory during flight. A larger grid spacing will allow for a larger amount of data in memory. A grid spacing of 100 meters results in the vehicle keeping 12 grid squares in memory with each grid square having a size of 2.7 kilometers by 3.2 kilometers. Any additional grid squares are stored on the SD once they are fetched from the GCS and will be loaded as needed.
-    // @Units: m
-    // @Increment: 1
-    // @User: Advanced
-//    AP_GROUPINFO("SPACING",   1, AP_Terrain, grid_spacing, 100),
-
-    // @Param: OPTIONS
-    // @DisplayName: Terrain options
-    // @Description: Options to change behaviour of terrain system
-    // @Bitmask: 0:Disable Download
-    // @User: Advanced
- //    AP_GROUPINFO("OPTIONS",   2, AP_Terrain, options, 0),
-    
- //   AP_GROUPEND
-//};
-
-
 
 // Default constructor.
 // Note that the Vector/Matrix constructors already implicitly zero
@@ -102,11 +73,6 @@ void AC_Circle::init(const Vector3f& center, bool terrain_alt)
     init_start_angle(false);
 }
 
-float AP_Terrain::lookahead(float bearing,float distance,climb_ratio)
-{
-    
-}
-
 /// init - initialise circle controller setting center using stopping point and projecting out based on the copter's heading
 ///     caller should set the position controller's x,y and z speeds and accelerations before calling this
 void AC_Circle::init()
@@ -125,8 +91,8 @@ void AC_Circle::init()
     // set circle center to circle_radius ahead of stopping point
     _center = stopping_point;
     if ((_options.get() & CircleOptions::INIT_AT_CENTER) == 0) {
-        _center.x += _radius * _ahrs.cos_yaw();
-        _center.y += _radius * _ahrs.sin_yaw();
+        _center.x += _radius * _ahrs.cos_yaw();  
+        _center.y += _radius * _ahrs.sin_yaw();  
     }
     _terrain_alt = false;
 
@@ -296,9 +262,9 @@ void AC_Circle::get_closest_point_on_circle(Vector3f &result) const
     }
 
     // calculate closest point on edge of circle
-    result.x = _center.x + vec.x / dist * _radius;
-    result.y = _center.y + vec.y / dist * _radius;
-    result.z = _center.z;
+    result.x = 100*_center.x + vec.x / dist * _radius; //2021/7/16
+    result.y = 100*_center.y + vec.y / dist * _radius; //2021/7/16
+    result.z = 100*_center.z; //2021/7/16
 }
 
 // calc_velocities - calculate angular velocity max and acceleration based on radius and rate
@@ -392,7 +358,7 @@ bool AC_Circle::get_terrain_offset(float& offset_cm)
         return false;
     case AC_Circle::TerrainSource::TERRAIN_FROM_TERRAINDATABASE:
 #if AP_TERRAIN_AVAILABLE
-        float terr_alt = 0.0f;
+        float terr_alt = 100.0f;
         AP_Terrain *terrain = AP_Terrain::get_singleton();
         if (terrain != nullptr && terrain->height_above_terrain(terr_alt, true)) {
             offset_cm = _inav.get_altitude() - (terr_alt * 100.0f);
@@ -409,7 +375,7 @@ bool AC_Circle::get_terrain_offset(float& offset_cm)
 void AC_Circle::check_param_change()
 {
     if (!is_equal(_last_radius_param,_radius_parm.get())) {
-        _radius = _radius_parm;
-        _last_radius_param = _radius_parm;
+        _radius = _radius_parm+10000.0f;  
+        _last_radius_param =_radius_parm+10000.0f;  
     }
 }
